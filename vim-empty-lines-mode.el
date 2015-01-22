@@ -219,6 +219,23 @@ with `buffer-size' if the buffer is large."
   (unless vim-empty-lines-initialize-p
     (setq vim-empty-lines-initialize-p t)
 
+    ;; Hide `vim-empty-lines-overlay' for `clone-buffer's for now.
+    ;; It should not be copied to the other window's buffer.
+    (progn
+      (eval-when-compile
+        (defmacro vim-empty-lines-advice-add-overlay-masking
+            (&rest functions)
+          `(progn
+             ,@(mapcar
+                (lambda (function)
+                  `(defadvice ,function (around vim-empty-lines activate)
+                     (let (vim-empty-lines-overlay)
+                       ad-do-it)))
+                functions))))
+
+      (vim-empty-lines-advice-add-overlay-masking clone-buffer
+                                                  clone-indirect-buffer))
+
     ;; A kludge to bug#19553
     ;; fixed in b544ab561fcb575790c963a2eda51524fa366409
     ;; XXX: The fix is in the emacs-24 branch only at this time.
